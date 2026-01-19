@@ -1,0 +1,73 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html,
+body {
+    background-color: black;
+    /* overscroll-behavior removed to allow bounce effect */
+}
+
+@layer utilities {
+    .animate-in {
+        animation-duration: 150ms;
+        --tw-enter-opacity: initial;
+        --tw-enter-scale: initial;
+        --tw-enter-rotate: initial;
+        --tw-enter-translate-x: initial;
+        --tw-enter-translate-y: initial;
+    }
+
+    .fade-in {
+        --tw-enter-opacity: 0;
+        animation-name: enter;
+    }
+}
+
+@keyframes enter {
+    from {
+        opacity: var(--tw-enter-opacity, 1);
+        transform: translate3d(var(--tw-enter-translate-x, 0), var(--tw-enter-translate-y, 0), 0) scale3d(var(--tw-enter-scale, 1), var(--tw-enter-scale, 1), var(--tw-enter-scale, 1)) rotate(var(--tw-enter-rotate, 0));
+    }
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@layer utilities {
+    .animate-in {
+        animation-duration: 150ms;
+        --tw-enter-opacity: initial;
+        --tw-enter-scale: initial;
+        --tw-enter-rotate: initial;
+        --tw-enter-translate-x: initial;
+        --tw-enter-translate-y: initial;
+    }
+
+    .fade-in {
+        --tw-enter-opacity: 0;
+        animation-name: enter;
+    }
+
+    .animate-fade-in-up {
+        animation: fadeInUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+}
+
+/* CSS for tech grid background */
+.bg-grid-pattern {
+    background-size: 40px 40px;
+    background-image: linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+    mask-image: radial-gradient(circle at center, black 40%, transparent 100%);
+    -webkit-mask-image: radial-gradient(circle at center, black 40%, transparent 100%);
+}
