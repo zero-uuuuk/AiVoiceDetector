@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Play, Pause, Bot, Fingerprint, Volume2, CheckCircle2, XCircle, ArrowRight } from 'lucide-react';
 
 export const PlayingView = ({
@@ -12,6 +12,30 @@ export const PlayingView = ({
     onNext,
     canvasRef
 }) => {
+    const [isVideoPlaying, setIsVideoPlaying] = useState(false);
+    const videoRef = React.useRef(null);
+
+    useEffect(() => {
+        if (feedback && questions[currentIdx]?.audioUrl.includes('human_')) {
+            // Reset logic
+            setIsVideoPlaying(false);
+            if (videoRef.current) {
+                videoRef.current.currentTime = 0;
+                videoRef.current.pause();
+            }
+
+            const timer = setTimeout(() => {
+                setIsVideoPlaying(true);
+                if (videoRef.current) {
+                    videoRef.current.play().catch(e => console.log("Play failed", e));
+                }
+            }, 800);
+            return () => clearTimeout(timer);
+        } else {
+            setIsVideoPlaying(false);
+        }
+    }, [feedback, currentIdx, questions]);
+
     return (
         <>
             <main className="flex-1 flex flex-col items-center justify-center w-full max-w-4xl px-4 pt-24 pb-20 md:px-6 md:pt-32 md:pb-8 relative z-10 min-h-[100dvh] animate-fade-in-up">
@@ -95,7 +119,7 @@ export const PlayingView = ({
             {/* Feedback Overlay */}
             {feedback && (
                 <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md animate-in fade-in duration-200 p-4">
-                    <div className="flex flex-col items-center w-full max-w-md p-6">
+                    <div className="flex flex-col items-center w-full max-w-md p-6 relative z-10">
                         {feedback === 'correct' ? (
                             <>
                                 <div className="relative mb-6">
@@ -117,6 +141,27 @@ export const PlayingView = ({
                                     Answer: <span className="text-white font-bold">{questions[currentIdx].type === 'AI' ? 'AI Generated' : 'Human Voice'}</span>
                                 </div>
                             </>
+                        )}
+
+                        {/* Video Container for Human Voice */}
+                        {questions[currentIdx].audioUrl.includes('human_') && (
+                            <div className="w-full max-w-sm aspect-video rounded-2xl overflow-hidden mb-6 shadow-2xl border border-neutral-800 relative bg-black">
+                                <video
+                                    ref={videoRef}
+                                    src={`/video/${questions[currentIdx].audioUrl.split('/').pop().replace('.mp3', '.mp4')}`}
+                                    loop
+                                    playsInline
+                                    className={`w-full h-full object-cover transition-opacity duration-500 ${isVideoPlaying ? 'opacity-100' : 'opacity-0'}`}
+                                />
+                                {!isVideoPlaying && (
+                                    <div className="absolute inset-0 flex items-center justify-center">
+                                        <div className="w-8 h-8 rounded-full border-2 border-neutral-700 border-t-lime-400 animate-spin"></div>
+                                    </div>
+                                )}
+                                {/* Optional overlay/gradient if needed for better text visibility if we put text over it, 
+                                    but here it's standalone. We can add a subtle inner shadow. */}
+                                <div className="absolute inset-0 ring-1 ring-white/10 rounded-2xl pointer-events-none"></div>
+                            </div>
                         )}
 
                         <button
