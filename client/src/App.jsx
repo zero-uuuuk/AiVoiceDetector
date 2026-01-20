@@ -21,6 +21,7 @@ function App() {
         humanTotal,
         isPlaying,
         feedback,
+        isLoading,
         canvasRef,
         startGame,
         goHome,
@@ -66,6 +67,7 @@ function App() {
                     selectedRounds={selectedRounds}
                     setSelectedRounds={setSelectedRounds}
                     onStart={startGame}
+                    isLoading={isLoading}
                 />
             )}
 

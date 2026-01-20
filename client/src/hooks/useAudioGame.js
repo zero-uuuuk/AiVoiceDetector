@@ -17,6 +17,7 @@ export function useAudioGame() {
     const [isPlaying, setIsPlaying] = useState(false);
     const [feedback, setFeedback] = useState(null); // null, 'correct', 'wrong'
     const [audioContext, setAudioContext] = useState(null);
+    const [isLoading, setIsLoading] = useState(false); // 게임 시작 로딩 상태
 
     // Refs
     // Refs
@@ -233,7 +234,9 @@ export function useAudioGame() {
     }, [audioContext]);
 
     // Game Logic Methods
-    const startGame = () => {
+    const startGame = async () => {
+        if (isLoading) return; // 이미 로딩 중이면 중복 실행 방지
+        
         // Initialize AudioContext on user gesture (Start Game) to ensure it's ready for SFX
         if (!audioContext) {
             const ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -242,19 +245,29 @@ export function useAudioGame() {
             audioContext.resume();
         }
 
-        const newQuestions = generateQuestions(selectedRounds);
-        setQuestions(newQuestions);
-        setAiScore(0);
-        setHumanScore(0);
+        setIsLoading(true);
+        try {
+            const newQuestions = await generateQuestions(selectedRounds);
+            setQuestions(newQuestions);
+            setAiScore(0);
+            setHumanScore(0);
 
-        const aiCount = newQuestions.filter(q => q.type === 'AI').length;
-        setAiTotal(aiCount);
-        setHumanTotal(newQuestions.length - aiCount);
+            const aiCount = newQuestions.filter(q => q.type === 'AI').length;
+            setAiTotal(aiCount);
+            setHumanTotal(newQuestions.length - aiCount);
 
-        setCurrentIdx(0);
-        setGameState('playing');
-        setFeedback(null);
-        setIsPlaying(false);
+            setCurrentIdx(0);
+            setGameState('playing');
+            setFeedback(null);
+            setIsPlaying(false);
+        } catch (error) {
+            console.error('Failed to start game:', error);
+            // 에러 처리: 사용자에게 알림 표시
+            const errorMessage = error.message || '문제를 불러오는데 실패했습니다.';
+            alert(`에러: ${errorMessage}\n\n서버가 실행 중인지 확인해주세요. (http://localhost:8000)`);
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     const handleGuess = (guessType) => {
@@ -324,6 +337,7 @@ export function useAudioGame() {
         humanTotal,
         isPlaying,
         feedback,
+        isLoading,
         canvasRef,
         startGame,
         goHome,

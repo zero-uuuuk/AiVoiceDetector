@@ -1,26 +1,32 @@
-const AI_FILES = ['ai_1.mp3', 'ai_2.mp3'];
-const HUMAN_FILES = ['human_1.mp3']; // Add more human files as they become available
+// API base URL (환경변수 또는 기본값)
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 
-export const generateQuestions = (count) => {
-    const questions = [];
-    for (let i = 0; i < count; i++) {
-        const isAi = Math.random() > 0.5;
-        // Ensure we try to balance available files or just random pick
-        const type = isAi ? 'AI' : 'HUMAN';
-
-        let filename;
-        if (type === 'AI') {
-            filename = AI_FILES[Math.floor(Math.random() * AI_FILES.length)];
-        } else {
-            filename = HUMAN_FILES[Math.floor(Math.random() * HUMAN_FILES.length)];
+/**
+ * 서버에서 문제를 가져옵니다.
+ * @param {number} count - 가져올 문제 수
+ * @returns {Promise<Array>} 문제 배열
+ */
+export const generateQuestions = async (count) => {
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/questions?count=${count}`);
+        
+        if (!response.ok) {
+            throw new Error(`Failed to fetch questions: ${response.statusText}`);
         }
-
-        questions.push({
-            id: i + 1,
-            type: type,
-            difficulty: Math.random() > 0.7 ? 'Hard' : 'Normal',
-            audioUrl: `/voice/${filename}`
-        });
+        
+        const data = await response.json();
+        
+        // 서버 응답 형식에 맞게 변환
+        return data.questions.map((q, index) => ({
+            id: q.id || index + 1,
+            type: q.type, // "AI" or "HUMAN"
+            audioUrl: q.audioUrl,
+            videoUrl: q.videoUrl || null, // HUMAN일 때만 값이 있음, AI는 null
+            name: q.name,
+            ai_human: q.ai_human
+        }));
+    } catch (error) {
+        console.error('Error fetching questions:', error);
+        throw error;
     }
-    return questions;
 };
