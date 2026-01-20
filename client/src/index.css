@@ -5,7 +5,18 @@
 html,
 body {
     background-color: black;
-    /* overscroll-behavior removed to allow bounce effect */
+    /* Mobile Enhancements */
+    -webkit-tap-highlight-color: transparent;
+    /* Remove gray tap box on iOS */
+    -webkit-touch-callout: none;
+    /* Disable long-press menu */
+    user-select: none;
+    /* Prevent text selection */
+    touch-action: manipulation;
+    /* Improve touch response */
+    overscroll-behavior-y: none;
+    /* Prevent pull-to-refresh on mobile web */
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
 }
 
 @layer utilities {
@@ -60,6 +71,14 @@ body {
 
     .animate-fade-in-up {
         animation: fadeInUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    .pt-safe {
+        padding-top: env(safe-area-inset-top);
+    }
+
+    .pb-safe {
+        padding-bottom: env(safe-area-inset-bottom);
     }
 }
 

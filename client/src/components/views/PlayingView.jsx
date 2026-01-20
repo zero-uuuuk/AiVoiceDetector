@@ -6,6 +6,7 @@ export const PlayingView = ({
     currentIdx,
     score,
     isPlaying,
+    isLoading, // Add prop
     feedback,
     onTogglePlay,
     onGuess,
@@ -16,7 +17,7 @@ export const PlayingView = ({
     const videoRef = React.useRef(null);
 
     useEffect(() => {
-        if (feedback && questions[currentIdx]?.audioUrl.includes('human_')) {
+        if (feedback && questions[currentIdx]?.type === 'HUMAN') {
             // Reset logic
             setIsVideoPlaying(false);
             if (videoRef.current) {
@@ -29,7 +30,7 @@ export const PlayingView = ({
                 if (videoRef.current) {
                     videoRef.current.play().catch(e => console.log("Play failed", e));
                 }
-            }, 800);
+            }, 100);
             return () => clearTimeout(timer);
         } else {
             setIsVideoPlaying(false);
@@ -49,21 +50,27 @@ export const PlayingView = ({
                     <div className="absolute inset-0 flex items-center justify-center z-20">
                         <button
                             onClick={onTogglePlay}
-                            disabled={!!feedback}
+                            disabled={!!feedback || isLoading}
                             className={`
                 w-16 h-16 md:w-24 md:h-24 rounded-full flex items-center justify-center transition-all duration-500 ease-out touch-manipulation
                 ${isPlaying
                                     ? 'bg-neutral-900/80 text-lime-400 shadow-[0_0_0_1px_rgba(163,230,53,0.2)] hover:scale-110 active:scale-95'
                                     : 'bg-lime-400 text-black shadow-[0_0_40px_rgba(163,230,53,0.4)] hover:scale-110 active:scale-95 hover:shadow-[0_0_60px_rgba(163,230,53,0.6)]'}
-                ${!!feedback ? 'opacity-0 scale-50 pointer-events-none' : 'opacity-100 scale-100'}
+                ${(!!feedback || isLoading) ? 'opacity-50 scale-90 pointer-events-none' : 'opacity-100 scale-100'}
               `}
                         >
-                            {isPlaying ? <Pause className="w-6 h-6 md:w-9 md:h-9" fill="currentColor" /> : <Play className="w-6 h-6 md:w-9 md:h-9 ml-1" fill="currentColor" />}
+                            {isLoading ? (
+                                <div className="w-6 h-6 md:w-9 md:h-9 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
+                            ) : (
+                                isPlaying ? <Pause className="w-6 h-6 md:w-9 md:h-9" fill="currentColor" /> : <Play className="w-6 h-6 md:w-9 md:h-9 ml-1" fill="currentColor" />
+                            )}
                         </button>
                     </div>
-                    {isPlaying && (
+                    {(isPlaying || isLoading) && (
                         <div className="absolute bottom-3 md:bottom-4 left-0 right-0 text-center animate-pulse">
-                            <span className="text-[10px] md:text-xs font-mono text-lime-400 tracking-[0.2em] uppercase">Processing Audio Stream...</span>
+                            <span className="text-[10px] md:text-xs font-mono text-lime-400 tracking-[0.2em] uppercase">
+                                {isLoading ? 'Loading Audio...' : 'Processing Audio Stream...'}
+                            </span>
                         </div>
                     )}
                 </div>
@@ -78,39 +85,39 @@ export const PlayingView = ({
                 <div className="grid grid-cols-2 gap-3 md:gap-8 w-full max-w-2xl mb-4 md:mb-8">
                     <button
                         onClick={() => onGuess('AI')}
-                        disabled={!!feedback}
+                        disabled={!!feedback || isLoading}
                         className={`
               relative group h-36 md:h-48 rounded-2xl md:rounded-3xl transition-all duration-300 flex flex-col items-center justify-center gap-3 md:gap-4 overflow-hidden
-              bg-neutral-900/60 hover:bg-neutral-800 backdrop-blur-md active:scale-[0.98] touch-manipulation
-              ${!!feedback && 'opacity-30 grayscale'}
+              bg-neutral-900/60 md:hover:bg-neutral-800 active:bg-neutral-800 backdrop-blur-md active:scale-[0.98] touch-manipulation
+              ${(!!feedback || isLoading) && 'opacity-30 grayscale cursor-not-allowed'}
             `}
                     >
-                        <div className="absolute inset-0 bg-gradient-to-br from-lime-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                        <div className="relative p-3 md:p-5 rounded-xl md:rounded-2xl bg-black/40 group-hover:bg-lime-400/20 group-hover:scale-110 transition-all duration-300 shadow-lg">
-                            <Bot className="w-8 h-8 md:w-10 md:h-10 text-neutral-400 group-hover:text-lime-400 transition-colors" />
+                        <div className="absolute inset-0 bg-gradient-to-br from-lime-500/10 to-transparent opacity-0 md:group-hover:opacity-100 transition-opacity duration-300"></div>
+                        <div className="relative p-3 md:p-5 rounded-xl md:rounded-2xl bg-black/40 md:group-hover:bg-lime-400/20 md:group-hover:scale-110 transition-all duration-300 shadow-lg">
+                            <Bot className="w-8 h-8 md:w-10 md:h-10 text-neutral-400 md:group-hover:text-lime-400 transition-colors" />
                         </div>
                         <div className="flex flex-col items-center relative">
-                            <span className="text-base md:text-xl font-bold text-white group-hover:text-lime-400 transition-colors tracking-wide">AI 인공지능</span>
-                            <span className="text-[10px] md:text-xs text-neutral-500 group-hover:text-lime-500/70 mt-0.5 md:mt-1 font-mono uppercase tracking-wider">Generated</span>
+                            <span className="text-base md:text-xl font-bold text-white md:group-hover:text-lime-400 transition-colors tracking-wide">AI 인공지능</span>
+                            <span className="text-[10px] md:text-xs text-neutral-500 md:group-hover:text-lime-500/70 mt-0.5 md:mt-1 font-mono uppercase tracking-wider">Generated</span>
                         </div>
                     </button>
 
                     <button
                         onClick={() => onGuess('HUMAN')}
-                        disabled={!!feedback}
+                        disabled={!!feedback || isLoading}
                         className={`
               relative group h-36 md:h-48 rounded-2xl md:rounded-3xl transition-all duration-300 flex flex-col items-center justify-center gap-3 md:gap-4 overflow-hidden
-              bg-neutral-900/60 hover:bg-neutral-800 backdrop-blur-md active:scale-[0.98] touch-manipulation
-              ${!!feedback && 'opacity-30 grayscale'}
+              bg-neutral-900/60 md:hover:bg-neutral-800 active:bg-neutral-800 backdrop-blur-md active:scale-[0.98] touch-manipulation
+              ${(!!feedback || isLoading) && 'opacity-30 grayscale cursor-not-allowed'}
             `}
                     >
-                        <div className="absolute inset-0 bg-gradient-to-bl from-cyan-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                        <div className="relative p-3 md:p-5 rounded-xl md:rounded-2xl bg-black/40 group-hover:bg-cyan-400/20 group-hover:scale-110 transition-all duration-300 shadow-lg">
-                            <Fingerprint className="w-8 h-8 md:w-10 md:h-10 text-neutral-400 group-hover:text-cyan-400 transition-colors" />
+                        <div className="absolute inset-0 bg-gradient-to-bl from-cyan-500/10 to-transparent opacity-0 md:group-hover:opacity-100 transition-opacity duration-300"></div>
+                        <div className="relative p-3 md:p-5 rounded-xl md:rounded-2xl bg-black/40 md:group-hover:bg-cyan-400/20 md:group-hover:scale-110 transition-all duration-300 shadow-lg">
+                            <Fingerprint className="w-8 h-8 md:w-10 md:h-10 text-neutral-400 md:group-hover:text-cyan-400 transition-colors" />
                         </div>
                         <div className="flex flex-col items-center relative">
-                            <span className="text-base md:text-xl font-bold text-white group-hover:text-cyan-400 transition-colors tracking-wide">HUMAN 사람</span>
-                            <span className="text-[10px] md:text-xs text-neutral-500 group-hover:text-cyan-500/70 mt-0.5 md:mt-1 font-mono uppercase tracking-wider">Authentic</span>
+                            <span className="text-base md:text-xl font-bold text-white md:group-hover:text-cyan-400 transition-colors tracking-wide">HUMAN 사람</span>
+                            <span className="text-[10px] md:text-xs text-neutral-500 md:group-hover:text-cyan-500/70 mt-0.5 md:mt-1 font-mono uppercase tracking-wider">Authentic</span>
                         </div>
                     </button>
                 </div>
@@ -144,11 +151,11 @@ export const PlayingView = ({
                         )}
 
                         {/* Video Container for Human Voice */}
-                        {questions[currentIdx].audioUrl.includes('human_') && (
+                        {questions[currentIdx].type === 'HUMAN' && (
                             <div className="w-full max-w-sm aspect-video rounded-2xl overflow-hidden mb-6 shadow-2xl border border-neutral-800 relative bg-black">
                                 <video
                                     ref={videoRef}
-                                    src={`/video/${questions[currentIdx].audioUrl.split('/').pop().replace('.mp3', '.mp4')}`}
+                                    src={questions[currentIdx].videoUrl}
                                     loop
                                     playsInline
                                     className={`w-full h-full object-cover transition-opacity duration-500 ${isVideoPlaying ? 'opacity-100' : 'opacity-0'}`}

@@ -20,6 +20,7 @@ function App() {
         humanScore,
         humanTotal,
         isPlaying,
+        isLoading,
         feedback,
         canvasRef,
         startGame,
@@ -32,7 +33,7 @@ function App() {
     const showStats = gameState === 'playing';
 
     return (
-        <div className="min-h-[100dvh] bg-black text-lime-400 font-sans flex flex-col items-center justify-between relative overflow-x-hidden">
+        <div className="min-h-[100dvh] pt-safe pb-safe bg-black text-lime-400 font-sans flex flex-col items-center justify-between relative overflow-x-hidden">
             {/* Common Background */}
             {/* Dynamic Tech Grid Background */}
             <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
@@ -75,6 +76,7 @@ function App() {
                     currentIdx={currentIdx}
                     score={score}
                     isPlaying={isPlaying}
+                    isLoading={isLoading}
                     feedback={feedback}
                     onTogglePlay={togglePlay}
                     onGuess={handleGuess}

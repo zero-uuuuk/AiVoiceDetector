@@ -15,19 +15,74 @@ export function useAudioGame() {
     const [humanTotal, setHumanTotal] = useState(0);
 
     const [isPlaying, setIsPlaying] = useState(false);
+    const [isLoading, setIsLoading] = useState(false); // Add Loading State
     const [feedback, setFeedback] = useState(null); // null, 'correct', 'wrong'
     const [audioContext, setAudioContext] = useState(null);
 
-    // Refs
     // Refs
     const canvasRef = useRef(null);
     const animationRef = useRef(null);
     const analyserRef = useRef(null);
     const sourceNodeRef = useRef(null);
     const audioBufferRef = useRef(null);
-    const loadedBufferUrlRef = useRef(null);
+    const bufferCacheRef = useRef({}); // Cache for decoded audio
     const gainNodeRef = useRef(null);
     const sfxBuffersRef = useRef({ correct: null, wrong: null });
+
+    // Helper: Load and Decode Audio
+    const loadAudioBuffer = useCallback(async (url) => {
+        if (!audioContext || !url) return null;
+
+        // Return cached if available
+        if (bufferCacheRef.current[url]) {
+            return bufferCacheRef.current[url];
+        }
+
+        try {
+            const response = await fetch(url);
+            const arrayBuffer = await response.arrayBuffer();
+            const decodedBuffer = await audioContext.decodeAudioData(arrayBuffer);
+            bufferCacheRef.current[url] = decodedBuffer;
+            return decodedBuffer;
+        } catch (error) {
+            console.error(`Failed to load audio: ${url}`, error);
+            return null;
+        }
+    }, [audioContext]);
+
+    // Effect: Load Current Audio & Preload Next
+    useEffect(() => {
+        const currentQuestion = questions[currentIdx];
+        if (!currentQuestion || !audioContext) return;
+
+        let isMounted = true;
+
+        const prepareAudio = async () => {
+            // 1. Load Current Track
+            setIsLoading(true);
+            const buffer = await loadAudioBuffer(currentQuestion.audioUrl);
+
+            if (isMounted) {
+                if (buffer) {
+                    audioBufferRef.current = buffer;
+                } else {
+                    audioBufferRef.current = null; // Clear if loading failed
+                }
+                setIsLoading(false);
+            }
+
+            // 2. Preload Next Track (Background)
+            const nextQuestion = questions[currentIdx + 1];
+            if (nextQuestion && isMounted) {
+                loadAudioBuffer(nextQuestion.audioUrl);
+            }
+        };
+
+        prepareAudio();
+
+        return () => { isMounted = false; };
+    }, [currentIdx, questions, audioContext, loadAudioBuffer]);
+
 
     // Audio Methods
     const stopAudio = useCallback(() => {
@@ -58,10 +113,7 @@ export function useAudioGame() {
 
     const playAudio = useCallback(async () => {
         let ctx = audioContext;
-        if (!ctx) {
-            ctx = new (window.AudioContext || window.webkitAudioContext)();
-            setAudioContext(ctx);
-        }
+        if (!ctx) return; // Should be initialized
         if (ctx.state === 'suspended') await ctx.resume();
 
         if (!analyserRef.current) {
@@ -71,19 +123,9 @@ export function useAudioGame() {
         }
 
         try {
-            const currentQuestion = questions[currentIdx];
-            if (!currentQuestion || !currentQuestion.audioUrl) {
-                console.error("No audio URL found for current question");
-                setIsPlaying(false);
+            if (!audioBufferRef.current) {
+                console.warn("Audio buffer not ready yet");
                 return;
-            }
-
-            // Load audio if not cached or if URL has changed
-            if (!audioBufferRef.current || loadedBufferUrlRef.current !== currentQuestion.audioUrl) {
-                const response = await fetch(currentQuestion.audioUrl);
-                const arrayBuffer = await response.arrayBuffer();
-                audioBufferRef.current = await ctx.decodeAudioData(arrayBuffer);
-                loadedBufferUrlRef.current = currentQuestion.audioUrl;
             }
 
             const source = ctx.createBufferSource();
@@ -109,16 +151,6 @@ export function useAudioGame() {
                     stopAudio();
                 }
             };
-
-            // Optional: Limit to 5 seconds like before, or let the file length dictate?
-            // User asked to use test.mp3. It's safe to assume they want to hear the file.
-            // I'll keep the timeout as a safeguard for very long files, but extend it or remove it.
-            // Original was 5s. I'll comment it out to play the full file (assuming clips are short).
-            /*
-            setTimeout(() => {
-                if (sourceNodeRef.current === source) stopAudio();
-            }, 5000);
-            */
 
             // Visualization - Multi-Wave Siri Style
             const bufferLength = analyserRef.current.frequencyBinCount;
@@ -207,6 +239,7 @@ export function useAudioGame() {
     }, [audioContext, stopAudio, questions, currentIdx]);
 
     const togglePlay = () => {
+        if (isLoading) return; // Prevent double click
         if (isPlaying) stopAudio();
         else playAudio();
     };
@@ -258,6 +291,7 @@ export function useAudioGame() {
     };
 
     const handleGuess = (guessType) => {
+        if (isLoading) return; // Prevent guess while loading
         stopAudio();
         const currentQ = questions[currentIdx];
         const isCorrect = currentQ.type === guessType;
@@ -323,6 +357,7 @@ export function useAudioGame() {
         aiTotal,
         humanTotal,
         isPlaying,
+        isLoading,
         feedback,
         canvasRef,
         startGame,
@@ -331,4 +366,5 @@ export function useAudioGame() {
         handleGuess,
         handleNext
     };
+
 }
