@@ -228,8 +228,8 @@ export function useAudioGame() {
             }
         };
 
-        loadSfx('/sounds/correct.mp3', 'correct');
-        loadSfx('/sounds/wrong.mp3', 'wrong');
+        loadSfx('/sound/correct.mp3', 'correct');
+        loadSfx('/sound/wrong.mp3', 'wrong');
     }, [audioContext]);
 
     // Game Logic Methods
@@ -278,7 +278,7 @@ export function useAudioGame() {
             source.start(0);
         } else {
             // Fallback
-            const soundFile = isCorrect ? '/sounds/correct.mp3' : '/sounds/wrong.mp3';
+            const soundFile = isCorrect ? '/sound/correct.mp3' : '/sound/wrong.mp3';
             const audio = new Audio(soundFile);
             audio.volume = 0.5;
             audio.play().catch(e => console.error("Error playing sound:", e));
